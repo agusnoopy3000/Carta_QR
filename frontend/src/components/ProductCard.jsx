@@ -7,9 +7,7 @@ import {
   Users, 
   Flame,
   AlertTriangle,
-  Sparkles,
-  Award,
-  Zap,
+  Fish,
   TrendingUp
 } from 'lucide-react'
 import { formatPrice, calculateDiscount } from '../utils/formatters'
@@ -20,16 +18,13 @@ import ProductOptions from './ProductOptions'
 
 export default function ProductCard({ product, isFeatured, isCatchOfDay, compact }) {
   const [isExpanded, setIsExpanded] = useState(false)
-  const [selectedOption, setSelectedOption] = useState(
-    product.options?.find(o => o.isDefault) || product.options?.[0]
-  )
   const { language } = useLanguage()
   const t = getTranslations(language)
 
   const hasMultipleOptions = product.options && product.options.length > 1
-  const currentPrice = selectedOption?.price || product.priceFrom
-  const originalPrice = selectedOption?.originalPrice
-  const hasDiscount = originalPrice && originalPrice > currentPrice
+  const priceFrom = product.priceFrom || product.options?.[0]?.price
+  const firstOption = product.options?.[0]
+  const hasDiscount = firstOption?.originalPrice && firstOption.originalPrice > firstOption.price
 
   // Detectar si es un producto "estrella" (Jardín del Mar, etc)
   const isStarProduct = product.code === 'JARDIN_MAR' || 
@@ -50,16 +45,16 @@ export default function ProductCard({ product, isFeatured, isCatchOfDay, compact
   return (
     <article 
       className={`
-        relative bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden
-        ${isExpanded ? 'ring-2 ring-cyan-400 shadow-lg shadow-cyan-100' : 'hover:scale-[1.01]'}
-        ${isStarProduct ? 'ring-2 ring-amber-300 bg-gradient-to-br from-amber-50 to-white' : ''}
+        relative bg-white rounded-2xl shadow-coastal hover:shadow-lg transition-all duration-300 overflow-hidden border
+        ${isExpanded ? 'ring-2 ring-ocean-400 shadow-lg shadow-ocean-100 border-ocean-200' : 'hover:scale-[1.01] border-sand-200'}
+        ${isStarProduct ? 'ring-2 ring-sunset-300 bg-gradient-to-br from-sunset-50/50 via-white to-sand-50' : ''}
         ${compact ? '' : 'animate-fade-in'}
       `}
-      onClick={() => !compact && setIsExpanded(!isExpanded)}
+      onClick={() => !compact && hasMultipleOptions && setIsExpanded(!isExpanded)}
     >
       {/* Badge superior izquierdo - Destacado */}
       {isFeatured && (
-        <div className="absolute top-3 left-3 z-10 flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-bold rounded-full shadow-lg shadow-orange-200">
+        <div className="absolute top-3 left-3 z-10 flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-sunset-400 to-sunset-600 text-white text-xs font-bold rounded-full shadow-lg shadow-sunset-300">
           <Star className="w-3 h-3 fill-white" />
           {t.featured}
         </div>
@@ -67,7 +62,7 @@ export default function ProductCard({ product, isFeatured, isCatchOfDay, compact
       
       {/* Badge superior derecho - Pesca del día */}
       {isCatchOfDay && (
-        <div className="absolute top-3 right-3 z-10 flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold rounded-full shadow-lg shadow-blue-200">
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-ocean-500 to-ocean-600 text-white text-xs font-bold rounded-full shadow-lg shadow-ocean-300">
           <Anchor className="w-3 h-3" />
           {t.catchOfDay}
         </div>
@@ -78,8 +73,8 @@ export default function ProductCard({ product, isFeatured, isCatchOfDay, compact
         <div className="flex justify-between items-start gap-4">
           {/* Product Info */}
           <div className="flex-1 min-w-0">
-            <h3 className={`font-display font-bold text-gray-800 leading-tight ${isStarProduct ? 'text-xl' : 'text-lg'}`}>
-              {product.name}
+            <h3 className={`font-display font-bold text-driftwood-800 leading-tight ${isStarProduct ? 'text-xl' : 'text-lg'}`}>
+              {product.name || product.nameEs}
             </h3>
             
             {/* Tags - Percepción de valor */}
@@ -92,8 +87,8 @@ export default function ProductCard({ product, isFeatured, isCatchOfDay, compact
             )}
 
             {/* Description */}
-            <p className="text-gray-500 text-sm mt-2.5 leading-relaxed line-clamp-2">
-              {product.description}
+            <p className="text-driftwood-500 text-sm mt-2.5 leading-relaxed line-clamp-2">
+              {product.description || product.descriptionEs}
             </p>
 
             {/* Spicy Level */}
@@ -106,42 +101,42 @@ export default function ProductCard({ product, isFeatured, isCatchOfDay, compact
           <div className="text-right flex-shrink-0 flex flex-col items-end">
             {hasDiscount && (
               <p className="text-sm text-gray-400 line-through mb-0.5">
-                {formatPrice(originalPrice)}
+                {formatPrice(firstOption.originalPrice)}
               </p>
             )}
-            <p className={`font-display font-extrabold ${isStarProduct ? 'text-2xl text-amber-600' : 'text-xl text-gray-800'}`}>
-              {formatPrice(currentPrice)}
+            <p className={`font-display font-extrabold ${isStarProduct ? 'text-2xl text-sunset-600' : 'text-xl text-ocean-700'}`}>
+              {formatPrice(priceFrom)}
             </p>
             {hasMultipleOptions && !isExpanded && (
-              <p className="text-xs text-cyan-600 font-medium mt-0.5">{t.from}</p>
+              <p className="text-xs text-ocean-500 font-medium mt-0.5">{t.from}</p>
             )}
             {hasDiscount && (
               <span className="inline-flex items-center gap-0.5 mt-1.5 px-2 py-0.5 bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-bold rounded-full">
                 <TrendingUp className="w-3 h-3" />
-                -{calculateDiscount(originalPrice, currentPrice)}%
+                -{calculateDiscount(firstOption.originalPrice, firstOption.price)}%
               </span>
             )}
           </div>
         </div>
 
-        {/* Serving info - prominente */}
-        {selectedOption?.servesPeople > 1 && (
-          <div className="flex items-center gap-1.5 mt-4 px-3 py-2 bg-purple-50 rounded-xl text-purple-700">
+        {/* Serving info for single option products */}
+        {!hasMultipleOptions && firstOption?.servesPeople > 1 && (
+          <div className="flex items-center gap-1.5 mt-4 px-3 py-2 bg-ocean-50 rounded-xl text-ocean-700 border border-ocean-100">
             <Users className="w-4 h-4" />
             <span className="text-sm font-medium">
-              {t.serves} {selectedOption.servesPeople} {selectedOption.servesPeople > 1 ? t.people : t.person}
+              {t.serves} {firstOption.servesPeople} {firstOption.servesPeople > 1 ? t.people : t.person}
             </span>
           </div>
         )}
 
         {/* Expand indicator for multiple options */}
         {hasMultipleOptions && !compact && (
-          <div className="flex items-center justify-center mt-4 pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-center mt-4 pt-4 border-t border-sand-100">
             <button className={`
               flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200
               ${isExpanded 
-                ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-200' 
-                : 'bg-gray-100 text-gray-600 hover:bg-cyan-50 hover:text-cyan-600'}
+                ? 'bg-gradient-to-r from-ocean-500 to-ocean-600 text-white shadow-lg shadow-ocean-200' 
+                : 'bg-sand-100 text-driftwood-600 hover:bg-ocean-50 hover:text-ocean-600'}
             `}>
               {isExpanded ? (
                 <>
@@ -150,6 +145,7 @@ export default function ProductCard({ product, isFeatured, isCatchOfDay, compact
                 </>
               ) : (
                 <>
+                  <Fish className="w-4 h-4" />
                   <span>{t.options} ({product.options.length})</span>
                   <ChevronDown className="w-4 h-4" />
                 </>
@@ -159,18 +155,17 @@ export default function ProductCard({ product, isFeatured, isCatchOfDay, compact
         )}
       </div>
 
-      {/* Expanded Options - con animación suave */}
+      {/* Expanded Options */}
       {isExpanded && hasMultipleOptions && (
-        <div className="border-t border-gray-100 p-5 bg-gradient-to-b from-gray-50 to-white animate-fade-in">
-          <p className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-cyan-500" />
-            {t.selectOption}:
+        <div 
+          className="border-t border-sand-100 p-5 bg-gradient-to-b from-sand-50/50 to-white animate-fade-in"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p className="text-sm font-bold text-driftwood-700 mb-3 flex items-center gap-2">
+            <Fish className="w-4 h-4 text-ocean-500" />
+            {language === 'es' ? 'Opciones disponibles:' : 'Available options:'}
           </p>
-          <ProductOptions 
-            options={product.options}
-            selectedOption={selectedOption}
-            onSelect={setSelectedOption}
-          />
+          <ProductOptions options={product.options} />
 
           {/* Allergens */}
           {product.allergens && (

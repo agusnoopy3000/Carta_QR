@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Producto base (sin precio directo - el precio vive en ProductOption)
@@ -51,7 +53,7 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<ProductTag> tags = new ArrayList<>();
+    private Set<ProductTag> tags = new HashSet<>();
 
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder;

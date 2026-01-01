@@ -1,21 +1,56 @@
 import { useRef, useEffect } from 'react'
 import { 
-  UtensilsCrossed, 
   Fish, 
   Wine, 
   GlassWater, 
   Baby,
   Shell,
-  Anchor
+  Anchor,
+  Waves
 } from 'lucide-react'
 
-// Iconos personalizados por categoría + emojis de respaldo
+// Configuración de categorías con paleta costera de Caldera
 const categoryConfig = {
-  MENU: { icon: Shell, emoji: '🦪', color: 'from-cyan-500 to-blue-600' },
-  PESCADOS: { icon: Fish, emoji: '🐟', color: 'from-blue-500 to-indigo-600' },
-  BAR: { icon: Wine, emoji: '🍹', color: 'from-purple-500 to-pink-600' },
-  BEBESTIBLES: { icon: GlassWater, emoji: '🥤', color: 'from-green-500 to-teal-600' },
-  MENU_NINO: { icon: Baby, emoji: '👶', color: 'from-orange-400 to-amber-500' }
+  MENU: { 
+    icon: Shell, 
+    emoji: '🦪', 
+    gradient: 'from-ocean-600 to-ocean-700',
+    bgLight: 'bg-ocean-50',
+    textLight: 'text-ocean-700',
+    shadow: 'shadow-ocean-500/25'
+  },
+  PESCADOS: { 
+    icon: Fish, 
+    emoji: '🐟', 
+    gradient: 'from-ocean-500 to-ocean-600',
+    bgLight: 'bg-ocean-50',
+    textLight: 'text-ocean-600',
+    shadow: 'shadow-ocean-500/25'
+  },
+  BAR: { 
+    icon: Wine, 
+    emoji: '🍹', 
+    gradient: 'from-sunset-500 to-sunset-600',
+    bgLight: 'bg-sunset-50',
+    textLight: 'text-sunset-600',
+    shadow: 'shadow-sunset-500/25'
+  },
+  BEBESTIBLES: { 
+    icon: GlassWater, 
+    emoji: '🥤', 
+    gradient: 'from-seafoam-400 to-seafoam-500',
+    bgLight: 'bg-seafoam-100',
+    textLight: 'text-seafoam-600',
+    shadow: 'shadow-seafoam-500/25'
+  },
+  MENU_NINO: { 
+    icon: Baby, 
+    emoji: '👶', 
+    gradient: 'from-sand-400 to-sand-500',
+    bgLight: 'bg-sand-100',
+    textLight: 'text-sand-600',
+    shadow: 'shadow-sand-500/25'
+  }
 }
 
 export default function CategoryNav({ categories, activeCategory, onCategoryChange }) {
@@ -43,10 +78,13 @@ export default function CategoryNav({ categories, activeCategory, onCategoryChan
   if (!categories || categories.length === 0) return null
 
   return (
-    <nav className="sticky top-12 z-40 bg-white/95 backdrop-blur-md shadow-lg shadow-gray-100/50 border-b border-gray-100">
+    <nav className="sticky top-12 z-40 bg-sand-50/95 backdrop-blur-md shadow-lg shadow-driftwood-400/10 border-b border-sand-200">
+      {/* Decoración de ola sutil */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-ocean-400 via-ocean-500 to-ocean-400 opacity-80" />
+      
       <div 
         ref={scrollRef}
-        className="flex gap-2 px-3 py-2.5 overflow-x-auto scrollbar-hide"
+        className="flex gap-2 px-3 py-3 overflow-x-auto scrollbar-hide"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {categories.map((category) => {
@@ -60,24 +98,27 @@ export default function CategoryNav({ categories, activeCategory, onCategoryChan
               ref={isActive ? activeRef : null}
               onClick={() => onCategoryChange(category.code)}
               className={`
-                flex items-center gap-1.5 px-3 py-2 rounded-lg font-medium text-xs whitespace-nowrap
-                transition-all duration-200 transform active:scale-95 flex-shrink-0
+                flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap
+                transition-all duration-300 transform active:scale-95 flex-shrink-0
                 ${isActive 
-                  ? `bg-gradient-to-r ${config.color} text-white shadow-md` 
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}
+                  ? `bg-gradient-to-r ${config.gradient} text-white shadow-lg ${config.shadow}` 
+                  : `${config.bgLight} ${config.textLight} hover:shadow-md border border-transparent hover:border-ocean-200`}
               `}
-              style={isActive ? { boxShadow: '0 3px 10px rgba(0,0,0,0.12)' } : {}}
             >
-              {/* Emoji o icono */}
-              <span className="text-base">{category.iconUrl || config.emoji}</span>
+              {/* Emoji del mar */}
+              <span className={`text-lg ${isActive ? 'animate-wave' : ''}`}>
+                {category.iconUrl || config.emoji}
+              </span>
               
-              <span className="font-semibold">{category.name}</span>
+              <span>{category.name}</span>
               
               {/* Badge con número de productos */}
               {category.productCount > 0 && (
                 <span className={`
-                  text-[10px] px-1.5 py-0.5 rounded-full font-bold
-                  ${isActive ? 'bg-white/25 text-white' : 'bg-gray-200 text-gray-600'}
+                  text-[10px] px-2 py-0.5 rounded-full font-bold min-w-[20px] text-center
+                  ${isActive 
+                    ? 'bg-white/25 text-white' 
+                    : 'bg-driftwood-200/50 text-driftwood-600'}
                 `}>
                   {category.productCount}
                 </span>

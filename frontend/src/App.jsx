@@ -5,11 +5,12 @@ import { ToastProvider, useToast } from './components/ui/Toast'
 import Header from './components/Header'
 import CategoryNav from './components/CategoryNav'
 import ProductList from './components/ProductList'
+import TourismSection from './components/TourismSection'
 import LoadingScreen from './components/LoadingScreen'
 import ScrollToTop from './components/ScrollToTop'
 import AccessibilityControls from './components/AccessibilityControls'
 import { menuService } from './services/menuService'
-import { RefreshCw, WifiOff, Anchor, MapPin, Clock, Instagram, Facebook, Waves, Bell } from 'lucide-react'
+import { RefreshCw, WifiOff, Anchor, MapPin, Clock, Instagram, Facebook, Waves, Bell, Ship } from 'lucide-react'
 
 // Componente interno que usa el Toast
 function AppContent() {
@@ -155,33 +156,44 @@ function AppContent() {
 
   return (
     <LanguageProvider value={{ language, setLanguage }}>
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100">
+      <div className="min-h-screen bg-gradient-to-b from-sand-50 via-white to-ocean-50">
         
-        {/* Botón Llamar Garzón - Fijo en la parte superior */}
-        <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-amber-500 to-orange-500 shadow-lg">
+        {/* Botón Llamar Garzón - Diseño costero mejorado */}
+        <div className="fixed top-0 left-0 right-0 z-50">
           <button
             onClick={callWaiter}
             disabled={callingWaiter}
             className={`
-              w-full py-3 px-4 flex items-center justify-center gap-3
+              w-full py-3.5 px-4 flex items-center justify-center gap-3
+              bg-gradient-to-r from-sunset-500 via-sunset-600 to-sunset-500 
               text-white font-bold text-base
+              shadow-lg shadow-sunset-500/30
               transition-all duration-300
               ${callingWaiter 
-                ? 'opacity-70 cursor-not-allowed' 
-                : 'hover:from-amber-600 hover:to-orange-600 active:scale-[0.98]'}
+                ? 'opacity-80 cursor-not-allowed' 
+                : 'hover:from-sunset-600 hover:via-sunset-700 hover:to-sunset-600 active:scale-[0.99]'}
             `}
+            style={{
+              backgroundSize: '200% 100%',
+              animation: callingWaiter ? 'none' : 'shimmer 3s linear infinite'
+            }}
           >
             <Bell className={`w-5 h-5 ${callingWaiter ? 'animate-pulse' : 'animate-bounce'}`} />
-            <span>
+            <span className="drop-shadow-sm">
               {callingWaiter 
-                ? (language === 'es' ? '¡Garzón en camino!' : 'Waiter on the way!')
-                : (language === 'es' ? '🔔 Llamar Garzón - ¡Estoy listo para pedir!' : '🔔 Call Waiter - Ready to order!')}
+                ? (language === 'es' ? '🏃 ¡Garzón en camino!' : '🏃 Waiter on the way!')
+                : (language === 'es' ? '🔔 Llamar Garzón' : '🔔 Call Waiter')}
             </span>
+            {!callingWaiter && (
+              <span className="hidden sm:inline text-sunset-200 text-sm font-normal">
+                {language === 'es' ? '- ¡Estoy listo para pedir!' : '- Ready to order!'}
+              </span>
+            )}
           </button>
         </div>
 
         {/* Spacer para el botón fijo */}
-        <div className="h-12" />
+        <div className="h-[52px]" />
 
         {/* Header con selector de idioma integrado */}
         <Header 
@@ -204,66 +216,83 @@ function AppContent() {
           language={language}
         />
 
-        {/* Footer Costero - Identidad El Macho */}
-        <footer className="relative mt-12 overflow-hidden">
-          {/* Wave top decoration */}
+        {/* Sección de Turismo - Playas de Caldera */}
+        <TourismSection language={language} />
+
+        {/* Footer Costero - Identidad El Macho Caldera */}
+        <footer className="relative mt-8 overflow-hidden">
+          {/* Wave top decoration - más elaborada */}
           <div className="absolute top-0 left-0 right-0 overflow-hidden">
-            <svg viewBox="0 0 1200 60" preserveAspectRatio="none" className="w-full h-8 text-slate-800">
-              <path d="M0,60 C200,20 400,40 600,30 C800,20 1000,50 1200,35 L1200,60 L0,60 Z" fill="currentColor"/>
+            <svg viewBox="0 0 1200 80" preserveAspectRatio="none" className="w-full h-12">
+              <path d="M0,80 C150,40 350,60 500,45 C650,30 800,55 950,40 C1100,25 1150,50 1200,35 L1200,80 L0,80 Z" fill="#164e63" fillOpacity="0.5"/>
+              <path d="M0,80 C200,50 400,65 600,50 C800,35 1000,60 1200,45 L1200,80 L0,80 Z" fill="#164e63"/>
             </svg>
           </div>
           
-          <div className="bg-gradient-to-b from-slate-800 to-slate-900 pt-12 pb-8 px-6">
-            {/* Compass background decoration */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-[0.02] pointer-events-none">
-              <Anchor className="w-96 h-96 text-white" />
-            </div>
+          <div className="bg-gradient-to-b from-ocean-900 via-ocean-950 to-driftwood-900 pt-16 pb-8 px-6">
+            {/* Fondo de red de pesca */}
+            <div className="absolute inset-0 opacity-[0.03]" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 30h60M30 0v60' stroke='%23ffffff' stroke-width='1' fill='none'/%3E%3C/svg%3E")`,
+              backgroundSize: '30px 30px'
+            }} />
 
             {/* Main Footer Content */}
             <div className="relative z-10 max-w-md mx-auto">
               {/* Logo area */}
               <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl shadow-lg shadow-cyan-500/30 mb-3">
-                  <Anchor className="w-8 h-8 text-white" />
+                <div className="inline-flex items-center justify-center w-18 h-18 bg-gradient-to-br from-sunset-400 to-sunset-600 rounded-2xl shadow-lg shadow-sunset-500/30 mb-3 p-4">
+                  <Anchor className="w-10 h-10 text-white" />
                 </div>
-                <h3 className="font-display text-2xl font-bold text-white mb-1">
+                <h3 className="font-display text-3xl font-black text-white mb-1">
                   El Macho
                 </h3>
-                <p className="text-cyan-400 text-sm font-medium">
-                  Productos del Mar
+                <p className="text-ocean-300 text-sm font-medium tracking-wide">
+                  {language === 'es' ? 'Productos del Mar' : 'Seafood Restaurant'}
                 </p>
               </div>
 
-              {/* Contact Info */}
+              {/* Tagline destacado */}
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center gap-3 px-5 py-2.5 bg-gradient-to-r from-sunset-500/20 to-sunset-600/20 rounded-full border border-sunset-500/30">
+                  <span className="text-xl">💪</span>
+                  <span className="text-sunset-300 font-bold">
+                    {language === 'es' ? '¡Porciones de Macho!' : 'Macho Size Portions!'}
+                  </span>
+                  <span className="text-xl">💪</span>
+                </div>
+              </div>
+
+              {/* Contact Info - Estilo náutico */}
               <div className="space-y-3 mb-6">
                 {/* Location */}
                 <a 
                   href="https://maps.google.com/?q=Caldera,Chile" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
+                  className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors border border-white/5"
                 >
-                  <div className="w-10 h-10 bg-cyan-500/20 rounded-full flex items-center justify-center">
-                    <MapPin className="w-5 h-5 text-cyan-400" />
+                  <div className="w-11 h-11 bg-ocean-500/20 rounded-xl flex items-center justify-center">
+                    <MapPin className="w-5 h-5 text-ocean-400" />
                   </div>
                   <div>
-                    <p className="text-white font-medium text-sm">Caldera, Chile</p>
-                    <p className="text-gray-400 text-xs">
-                      {language === 'es' ? 'Costa del Pacífico' : 'Pacific Coast'}
+                    <p className="text-white font-semibold text-sm">Caldera, Atacama</p>
+                    <p className="text-ocean-400 text-xs flex items-center gap-1">
+                      <Ship className="w-3 h-3" />
+                      {language === 'es' ? 'Frente al mar • lll Región de Chile' : 'Oceanfront • Atacama Region, Chile'}
                     </p>
                   </div>
                 </a>
 
                 {/* Hours */}
-                <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl">
-                  <div className="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-amber-400" />
+                <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
+                  <div className="w-11 h-11 bg-sunset-500/20 rounded-xl flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-sunset-400" />
                   </div>
                   <div>
-                    <p className="text-white font-medium text-sm">
+                    <p className="text-white font-semibold text-sm">
                       {language === 'es' ? 'Lunes a Domingo' : 'Monday to Sunday'}
                     </p>
-                    <p className="text-gray-400 text-xs">12:00 - 22:00</p>
+                    <p className="text-sand-400 text-xs">12:00 - 22:00 hrs</p>
                   </div>
                 </div>
               </div>
@@ -286,47 +315,38 @@ function AppContent() {
                 </a>
               </div>
 
-              {/* Tagline */}
-              <div className="text-center mb-6">
-                <p className="inline-flex items-center gap-2 text-amber-400 font-bold text-lg">
-                  <span>💪</span>
-                  {language === 'es' ? '¡Porciones de Macho!' : 'Macho Size Portions!'}
-                  <span>💪</span>
-                </p>
+              {/* Divider con ola */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-ocean-700 to-transparent" />
+                <Waves className="w-5 h-5 text-ocean-600" />
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-ocean-700 to-transparent" />
               </div>
 
-              {/* Divider with wave */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent" />
-                <Waves className="w-5 h-5 text-slate-600" />
-                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent" />
+              {/* Decoración mariscos */}
+              <div className="flex justify-center gap-3 mb-4 opacity-60">
+                <span className="text-lg">🦐</span>
+                <span className="text-lg">🦀</span>
+                <span className="text-lg">🐟</span>
+                <span className="text-lg">🦑</span>
+                <span className="text-lg">🦞</span>
               </div>
 
               {/* Copyright */}
               <div className="text-center">
-                <p className="text-gray-500 text-xs">
-                  © 2024 El Macho - Productos del Mar
+                <p className="text-ocean-600 text-xs">
+                  © 2025 El Macho - Productos del Mar
                 </p>
-                <p className="text-gray-600 text-xs mt-1">
+                <p className="text-ocean-700 text-xs mt-1">
                   {language === 'es' 
                     ? 'Hecho con ❤️ en Caldera, Chile 🇨🇱'
                     : 'Made with ❤️ in Caldera, Chile 🇨🇱'}
                 </p>
               </div>
-
-              {/* Seafood decoration */}
-              <div className="flex justify-center gap-4 mt-4 opacity-40">
-                <span className="text-xl">🦐</span>
-                <span className="text-xl">🦀</span>
-                <span className="text-xl">🐟</span>
-                <span className="text-xl">🦑</span>
-                <span className="text-xl">🦞</span>
-              </div>
             </div>
           </div>
 
           {/* Safe area for iOS */}
-          <div className="bg-slate-900 h-safe-area-inset-bottom" />
+          <div className="bg-driftwood-900 h-safe-area-inset-bottom" />
         </footer>
 
         {/* Floating Controls */}

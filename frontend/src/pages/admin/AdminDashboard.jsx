@@ -1,13 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { adminService } from '../../services/adminService'
 import { 
   Anchor, LogOut, Package, Tag, RefreshCw, 
   Search, Filter, ChevronRight, Edit3, 
   ToggleLeft, ToggleRight, DollarSign, Eye, EyeOff,
-  CheckCircle, XCircle, AlertTriangle
+  CheckCircle, XCircle, AlertTriangle, Clock, TrendingUp,
+  Activity, Zap, Save, X, Maximize2, Minimize2,
+  Star, TrendingDown, Monitor
 } from 'lucide-react'
 import ProductEditModal from './ProductEditModal'
+
+const AUTO_REFRESH_INTERVAL = 5000 // 5 segundos
 
 export default function AdminDashboard() {
   const { logout } = useAuth()
@@ -19,11 +23,42 @@ export default function AdminDashboard() {
   const [showUnavailable, setShowUnavailable] = useState(true)
   const [editingProduct, setEditingProduct] = useState(null)
   const [toast, setToast] = useState(null)
+  const [autoRefresh, setAutoRefresh] = useState(true)
+  const [lastUpdate, setLastUpdate] = useState(null)
+  const [editingField, setEditingField] = useState(null) // { productId, field, optionId? }
+  const [previewVisible, setPreviewVisible] = useState(false)
+  const [changesHistory, setChangesHistory] = useState([])
+  const refreshIntervalRef = useRef(null)
 
+  // Cargar datos iniciales
   useEffect(() => {
     loadCategories()
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current)
+      }
+    }
   }, [])
 
+  // Auto-refresh
+  useEffect(() => {
+    if (autoRefresh) {
+      refreshIntervalRef.current = setInterval(() => {
+        refreshData()
+      }, AUTO_REFRESH_INTERVAL)
+    } else {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current)
+      }
+    }
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current)
+      }
+    }
+  }, [autoRefresh, selectedCategory])
+
+  // Cargar productos cuando cambia la categoría
   useEffect(() => {
     if (selectedCategory) {
       loadProducts(selectedCategory.id)
@@ -41,35 +76,111 @@ export default function AdminDashboard() {
     }
   }
 
-  const loadAllProducts = async () => {
-    setLoading(true)
+  const loadAllProducts = async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const data = await adminService.getProducts()
-      setProducts(data)
+      setProducts(prevProducts => {
+        // Detectar cambios para historial
+        const changes = detectChanges(prevProducts, data)
+        if (changes.length > 0 && !silent) {
+          setChangesHistory(prev => [...changes, ...prev].slice(0, 20))
+        }
+        return data
+      })
+      setLastUpdate(new Date())
     } catch (error) {
-      showToast('Error al cargar productos', 'error')
+      if (!silent) showToast('Error al cargar productos', 'error')
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
-  const loadProducts = async (categoryId) => {
-    setLoading(true)
+  const loadProducts = async (categoryId, silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const data = await adminService.getProductsByCategory(categoryId)
-      setProducts(data)
+      setProducts(prevProducts => {
+        const changes = detectChanges(prevProducts, data)
+        if (changes.length > 0 && !silent) {
+          setChangesHistory(prev => [...changes, ...prev].slice(0, 20))
+        }
+        return data
+      })
+      setLastUpdate(new Date())
     } catch (error) {
-      showToast('Error al cargar productos', 'error')
+      if (!silent) showToast('Error al cargar productos', 'error')
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
+  }
+
+  const refreshData = () => {
+    if (selectedCategory) {
+      loadProducts(selectedCategory.id, true)
+    } else {
+      loadAllProducts(true)
+    }
+    loadCategories()
+  }
+
+  const detectChanges = (oldProducts, newProducts) => {
+    if (!oldProducts || oldProducts.length === 0) return []
+    const changes = []
+    const oldMap = new Map(oldProducts.map(p => [p.id, p]))
+    
+    newProducts.forEach(newProduct => {
+      const oldProduct = oldMap.get(newProduct.id)
+      if (!oldProduct) return
+
+      // Cambios en disponibilidad
+      if (oldProduct.available !== newProduct.available) {
+        changes.push({
+          type: 'availability',
+          product: newProduct,
+          oldValue: oldProduct.available,
+          newValue: newProduct.available,
+          timestamp: new Date()
+        })
+      }
+
+      // Cambios en precios
+      if (newProduct.options) {
+        newProduct.options.forEach((newOption, idx) => {
+          const oldOption = oldProduct.options?.[idx]
+          if (oldOption && oldOption.price !== newOption.price) {
+            changes.push({
+              type: 'price',
+              product: newProduct,
+              option: newOption,
+              oldValue: oldOption.price,
+              newValue: newOption.price,
+              timestamp: new Date()
+            })
+          }
+        })
+      }
+
+      // Cambios en nombre
+      if (oldProduct.nameEs !== newProduct.nameEs) {
+        changes.push({
+          type: 'name',
+          product: newProduct,
+          oldValue: oldProduct.nameEs,
+          newValue: newProduct.nameEs,
+          timestamp: new Date()
+        })
+      }
+    })
+
+    return changes
   }
 
   const handleToggleAvailable = async (product) => {
     try {
       await adminService.toggleProductAvailable(product.id, !product.available)
       setProducts(products.map(p => 
-        p.id === product.id ? { ...p, available: !p.available } : p
+        p.id === product.id ? { ...p, available: !p.available, lastModified: new Date() } : p
       ))
       showToast(
         `${product.nameEs} ahora está ${!product.available ? 'disponible' : 'no disponible'}`,
@@ -80,16 +191,48 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleInlineEdit = async (productId, field, value, optionId = null) => {
+    try {
+      const product = products.find(p => p.id === productId)
+      if (!product) return
+
+      if (field === 'price' && optionId) {
+        await adminService.quickUpdatePrice(optionId, parseInt(value) || 0)
+        setProducts(products.map(p => {
+          if (p.id === productId) {
+            const updatedOptions = p.options.map(opt => 
+              opt.id === optionId ? { ...opt, price: parseInt(value) || 0 } : opt
+            )
+            return { ...p, options: updatedOptions, lastModified: new Date() }
+          }
+          return p
+        }))
+        showToast('Precio actualizado', 'success')
+      } else if (field === 'nameEs') {
+        await adminService.updateProduct(productId, { ...product, nameEs: value })
+        setProducts(products.map(p => 
+          p.id === productId ? { ...p, nameEs: value, lastModified: new Date() } : p
+        ))
+        showToast('Nombre actualizado', 'success')
+      }
+      
+      setEditingField(null)
+    } catch (error) {
+      showToast('Error al actualizar', 'error')
+      setEditingField(null)
+    }
+  }
+
   const handleProductUpdated = (updatedProduct) => {
     setProducts(products.map(p => 
-      p.id === updatedProduct.id ? updatedProduct : p
+      p.id === updatedProduct.id ? { ...updatedProduct, lastModified: new Date() } : p
     ))
     setEditingProduct(null)
     showToast('Producto actualizado correctamente', 'success')
   }
 
   const showToast = (message, type = 'info') => {
-    setToast({ message, type })
+    setToast({ message, type, id: Date.now() })
     setTimeout(() => setToast(null), 3000)
   }
 
@@ -103,7 +246,21 @@ export default function AdminDashboard() {
   const stats = {
     total: products.length,
     available: products.filter(p => p.available).length,
-    unavailable: products.filter(p => !p.available).length
+    unavailable: products.filter(p => !p.available).length,
+    featured: products.filter(p => p.featured).length,
+    recentlyModified: products.filter(p => {
+      if (!p.lastModified) return false
+      const diff = new Date() - new Date(p.lastModified)
+      return diff < 60000 // Último minuto
+    }).length
+  }
+
+  const formatTimeAgo = (date) => {
+    if (!date) return ''
+    const diff = Math.floor((new Date() - new Date(date)) / 1000)
+    if (diff < 60) return `${diff}s`
+    if (diff < 3600) return `${Math.floor(diff / 60)}m`
+    return `${Math.floor(diff / 3600)}h`
   }
 
   return (
@@ -117,12 +274,34 @@ export default function AdminDashboard() {
                 <Anchor className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <div>
-                <h1 className="font-bold text-base sm:text-lg">El Macho</h1>
-                <p className="text-cyan-300 text-[10px] sm:text-xs">Panel Admin</p>
+                <h1 className="font-bold text-base sm:text-lg">El Macho Admin</h1>
+                <div className="flex items-center gap-2 text-[10px] sm:text-xs text-cyan-300">
+                  {autoRefresh && (
+                    <>
+                      <Activity className="w-3 h-3 animate-pulse" />
+                      <span>Tiempo real</span>
+                    </>
+                  )}
+                  {lastUpdate && (
+                    <span className="text-gray-400">• {formatTimeAgo(lastUpdate)}</span>
+                  )}
+                </div>
               </div>
             </div>
             
             <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                onClick={() => setPreviewVisible(!previewVisible)}
+                className={`p-2 sm:px-3 sm:py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                  previewVisible 
+                    ? 'bg-cyan-500/20 text-cyan-300' 
+                    : 'bg-white/10 hover:bg-white/20'
+                }`}
+                title="Vista previa"
+              >
+                <Monitor className="w-4 h-4" />
+                <span className="hidden sm:inline">Vista Previa</span>
+              </button>
               <a
                 href="/"
                 target="_blank"
@@ -145,47 +324,131 @@ export default function AdminDashboard() {
         </div>
       </header>
 
+      {/* Preview Panel */}
+      {previewVisible && (
+        <div className="fixed inset-0 bg-black/50 z-40 pt-[73px]">
+          <div className="bg-white h-full flex flex-col">
+            <div className="bg-gray-800 text-white px-4 py-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Monitor className="w-5 h-5" />
+                <span className="font-medium">Vista Previa en Tiempo Real</span>
+              </div>
+              <button
+                onClick={() => setPreviewVisible(false)}
+                className="p-2 hover:bg-white/10 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <iframe 
+              src="/" 
+              className="flex-1 w-full border-0"
+              title="Vista previa"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        {/* Stats Cards - Mobile optimized */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
-          <div className="bg-white rounded-lg sm:rounded-xl p-2 sm:p-4 shadow-sm border border-gray-100">
-            <div className="flex flex-col sm:flex-row items-center sm:gap-3 text-center sm:text-left">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-1 sm:mb-0">
+        {/* Stats Cards - Mejoradas */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 mb-4 sm:mb-6">
+          <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Package className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.total}</p>
-                <p className="text-[10px] sm:text-xs text-gray-500">Total</p>
+                <p className="text-[10px] sm:text-xs text-gray-500 truncate">Total</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg sm:rounded-xl p-2 sm:p-4 shadow-sm border border-gray-100">
-            <div className="flex flex-col sm:flex-row items-center sm:gap-3 text-center sm:text-left">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg flex items-center justify-center mb-1 sm:mb-0">
+          <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
                 <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.available}</p>
-                <p className="text-[10px] sm:text-xs text-gray-500">Disponibles</p>
+                <p className="text-[10px] sm:text-xs text-gray-500 truncate">Disponibles</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg sm:rounded-xl p-2 sm:p-4 shadow-sm border border-gray-100">
-            <div className="flex flex-col sm:flex-row items-center sm:gap-3 text-center sm:text-left">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-100 rounded-lg flex items-center justify-center mb-1 sm:mb-0">
+          <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
                 <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.unavailable}</p>
-                <p className="text-[10px] sm:text-xs text-gray-500">No disp.</p>
+                <p className="text-[10px] sm:text-xs text-gray-500 truncate">No disp.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Star className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.featured}</p>
+                <p className="text-[10px] sm:text-xs text-gray-500 truncate">Destacados</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.recentlyModified}</p>
+                <p className="text-[10px] sm:text-xs text-gray-500 truncate">Recientes</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Category Filter - Mobile horizontal scroll */}
+        {/* Controls Bar */}
+        <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 sm:gap-3 flex-1">
+              <button
+                onClick={() => setAutoRefresh(!autoRefresh)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  autoRefresh 
+                    ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <Activity className={`w-4 h-4 ${autoRefresh ? 'animate-pulse' : ''}`} />
+                <span className="hidden sm:inline">{autoRefresh ? 'Auto-actualizar ON' : 'Auto-actualizar OFF'}</span>
+                <span className="sm:hidden">{autoRefresh ? 'ON' : 'OFF'}</span>
+              </button>
+              <button
+                onClick={refreshData}
+                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 transition-colors"
+                title="Actualizar ahora"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              {lastUpdate && (
+                <>
+                  <Clock className="w-4 h-4" />
+                  <span>Última actualización: {formatTimeAgo(lastUpdate)}</span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Category Filter */}
         <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 mb-4 sm:mb-6">
           <h3 className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3 flex items-center gap-2">
             <Tag className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -220,7 +483,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Search and Filters - Mobile optimized */}
+        {/* Search and Filters */}
         <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 mb-4 sm:mb-6">
           <div className="flex flex-col gap-3 sm:gap-4">
             <div className="relative">
@@ -244,15 +507,6 @@ export default function AdminDashboard() {
                 />
                 <span className="text-xs sm:text-sm text-gray-600">Mostrar no disponibles</span>
               </label>
-              
-              <button
-                onClick={() => selectedCategory ? loadProducts(selectedCategory.id) : loadAllProducts()}
-                className="p-2 sm:px-4 sm:py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                title="Actualizar lista"
-              >
-                <RefreshCw className="w-4 h-4" />
-                <span className="hidden sm:inline">Actualizar</span>
-              </button>
             </div>
           </div>
         </div>
@@ -278,6 +532,9 @@ export default function AdminDashboard() {
                 product={product}
                 onEdit={() => setEditingProduct(product)}
                 onToggleAvailable={() => handleToggleAvailable(product)}
+                onInlineEdit={handleInlineEdit}
+                editingField={editingField}
+                setEditingField={setEditingField}
               />
             ))}
           </div>
@@ -293,7 +550,7 @@ export default function AdminDashboard() {
         />
       )}
 
-      {/* Toast - Mobile optimized */}
+      {/* Toast */}
       {toast && (
         <div className={`
           fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-sm px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 z-50 animate-slide-up
@@ -329,8 +586,8 @@ export default function AdminDashboard() {
   )
 }
 
-// Product Card Component - Mobile optimized
-function ProductCard({ product, onEdit, onToggleAvailable }) {
+// Product Card Component - Con edición inline
+function ProductCard({ product, onEdit, onToggleAvailable, onInlineEdit, editingField, setEditingField }) {
   const formatPrice = (price) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
@@ -339,10 +596,42 @@ function ProductCard({ product, onEdit, onToggleAvailable }) {
     }).format(price)
   }
 
+  const isEditingName = editingField?.productId === product.id && editingField?.field === 'nameEs'
+  const getEditingOptionId = (optionId) => editingField?.productId === product.id && editingField?.field === 'price' && editingField?.optionId === optionId
+
+  const handleNameBlur = (e) => {
+    const newValue = e.target.value.trim()
+    if (newValue && newValue !== product.nameEs) {
+      onInlineEdit(product.id, 'nameEs', newValue)
+    } else {
+      setEditingField(null)
+    }
+  }
+
+  const handlePriceBlur = (optionId, e) => {
+    const newValue = parseInt(e.target.value) || 0
+    const option = product.options.find(o => o.id === optionId)
+    if (option && newValue !== option.price) {
+      onInlineEdit(product.id, 'price', newValue, optionId)
+    } else {
+      setEditingField(null)
+    }
+  }
+
+  const handleKeyDown = (e, callback) => {
+    if (e.key === 'Enter') {
+      e.target.blur()
+    } else if (e.key === 'Escape') {
+      setEditingField(null)
+      e.target.blur()
+    }
+  }
+
   return (
     <div className={`
       bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border transition-all
       ${product.available ? 'border-gray-100' : 'border-red-200 bg-red-50/50'}
+      ${product.lastModified && (new Date() - new Date(product.lastModified)) < 60000 ? 'ring-2 ring-cyan-200 bg-cyan-50/30' : ''}
     `}>
       <div className="flex items-start gap-3 sm:gap-4">
         {/* Image placeholder */}
@@ -360,35 +649,78 @@ function ProductCard({ product, onEdit, onToggleAvailable }) {
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-1">
-            <h3 className={`font-semibold text-sm sm:text-base ${product.available ? 'text-gray-900' : 'text-gray-500'}`}>
-              {product.nameEs}
-            </h3>
-            {!product.available && (
-              <span className="px-1.5 sm:px-2 py-0.5 bg-red-100 text-red-600 text-[10px] sm:text-xs font-medium rounded-full flex-shrink-0">
-                No disp.
-              </span>
+            {isEditingName ? (
+              <input
+                type="text"
+                defaultValue={product.nameEs}
+                onBlur={handleNameBlur}
+                onKeyDown={(e) => handleKeyDown(e)}
+                className="flex-1 px-2 py-1 border-2 border-cyan-500 rounded-lg text-sm font-semibold focus:outline-none"
+                autoFocus
+              />
+            ) : (
+              <h3 
+                className={`font-semibold text-sm sm:text-base cursor-text ${product.available ? 'text-gray-900' : 'text-gray-500'}`}
+                onDoubleClick={() => setEditingField({ productId: product.id, field: 'nameEs' })}
+                title="Doble clic para editar"
+              >
+                {product.nameEs}
+              </h3>
             )}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {product.lastModified && (new Date() - new Date(product.lastModified)) < 60000 && (
+                <span className="px-1.5 py-0.5 bg-cyan-100 text-cyan-700 text-[10px] font-medium rounded-full flex items-center gap-1">
+                  <Zap className="w-3 h-3" />
+                  Nuevo
+                </span>
+              )}
+              {!product.available && (
+                <span className="px-1.5 sm:px-2 py-0.5 bg-red-100 text-red-600 text-[10px] sm:text-xs font-medium rounded-full">
+                  No disp.
+                </span>
+              )}
+            </div>
           </div>
           
           {product.descriptionEs && (
             <p className="text-xs sm:text-sm text-gray-500 line-clamp-1 mb-2">{product.descriptionEs}</p>
           )}
 
-          {/* Options/Prices */}
+          {/* Options/Prices - Con edición inline */}
           <div className="flex flex-wrap gap-1 sm:gap-2">
-            {product.options?.slice(0, 3).map(option => (
-              <span
-                key={option.id}
-                className={`
-                  px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-medium
-                  ${option.available 
-                    ? 'bg-gray-100 text-gray-700' 
-                    : 'bg-gray-100 text-gray-400 line-through'}
-                `}
-              >
-                {option.nameEs}: {formatPrice(option.price)}
-              </span>
-            ))}
+            {product.options?.slice(0, 3).map(option => {
+              const isEditingPrice = getEditingOptionId(option.id)
+              return (
+                <div key={option.id} className="flex items-center gap-1">
+                  {isEditingPrice ? (
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-gray-500">$</span>
+                      <input
+                        type="number"
+                        defaultValue={option.price}
+                        onBlur={(e) => handlePriceBlur(option.id, e)}
+                        onKeyDown={(e) => handleKeyDown(e)}
+                        className="w-20 px-2 py-1 border-2 border-cyan-500 rounded-lg text-xs font-medium focus:outline-none"
+                        autoFocus
+                      />
+                    </div>
+                  ) : (
+                    <span
+                      onDoubleClick={() => setEditingField({ productId: product.id, field: 'price', optionId: option.id })}
+                      className={`
+                        px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-medium cursor-text hover:bg-gray-200 transition-colors
+                        ${option.available 
+                          ? 'bg-gray-100 text-gray-700' 
+                          : 'bg-gray-100 text-gray-400 line-through'}
+                      `}
+                      title="Doble clic para editar precio"
+                    >
+                      {option.nameEs}: {formatPrice(option.price)}
+                    </span>
+                  )}
+                </div>
+              )
+            })}
             {product.options?.length > 3 && (
               <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md text-[10px] font-medium">
                 +{product.options.length - 3} más
@@ -402,7 +734,7 @@ function ProductCard({ product, onEdit, onToggleAvailable }) {
           </div>
         </div>
 
-        {/* Actions - Vertical on mobile */}
+        {/* Actions */}
         <div className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2 flex-shrink-0">
           <button
             onClick={onToggleAvailable}
@@ -420,7 +752,7 @@ function ProductCard({ product, onEdit, onToggleAvailable }) {
           <button
             onClick={onEdit}
             className="p-1.5 sm:p-2 bg-cyan-100 text-cyan-600 hover:bg-cyan-200 rounded-lg transition-colors"
-            title="Editar producto"
+            title="Editar producto completo"
           >
             <Edit3 className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>

@@ -17,7 +17,8 @@ import {
   Heart,
   ThumbsUp,
   Sparkles,
-  Crown
+  Crown,
+  Fish
 } from 'lucide-react'
 
 const iconMap = {
@@ -42,18 +43,19 @@ const iconMap = {
   heart: Heart,
   'thumbs-up': ThumbsUp,
   sparkles: Sparkles,
-  crown: Crown
+  crown: Crown,
+  fish: Fish
 }
 
-// Pre-defined gradient backgrounds for different tag types
+// Pre-defined gradient backgrounds with coastal theme
 const tagGradients = {
-  portion: 'from-emerald-500 to-green-600',
-  sharing: 'from-purple-500 to-violet-600',
-  value: 'from-amber-500 to-orange-600',
-  special: 'from-rose-500 to-red-600',
-  dietary: 'from-lime-500 to-green-600',
-  promo: 'from-cyan-500 to-blue-600',
-  default: 'from-gray-500 to-slate-600'
+  portion: 'from-seafoam-400 to-seafoam-500',      // Espuma de mar
+  sharing: 'from-ocean-400 to-ocean-600',          // Océano
+  value: 'from-sunset-400 to-sunset-600',          // Atardecer
+  special: 'from-coral-400 to-coral-600',          // Coral
+  dietary: 'from-seafoam-300 to-seafoam-400',      // Verde mar
+  promo: 'from-ocean-500 to-ocean-700',            // Azul profundo
+  default: 'from-driftwood-400 to-driftwood-600'   // Madera de bote
 }
 
 export default function ProductTag({ tag, size = 'normal' }) {
@@ -94,9 +96,6 @@ export default function ProductTag({ tag, size = 'normal' }) {
           shadow-sm
           ${sizeClasses[size]}
         `}
-        style={{
-          boxShadow: `0 2px 6px ${tag.backgroundColor}50`
-        }}
       >
         <IconComponent className={iconSizes[size]} strokeWidth={2.5} />
         <span className="whitespace-nowrap">{tag.text}</span>
@@ -104,18 +103,17 @@ export default function ProductTag({ tag, size = 'normal' }) {
     )
   }
 
-  // Solid color version for less prominent tags
+  // Solid color version for less prominent tags - coastal colors
   return (
     <span 
       className={`
         inline-flex items-center rounded-full font-semibold
-        transition-all duration-200
+        transition-all duration-200 bg-sand-100 text-driftwood-700
         ${sizeClasses[size]}
       `}
       style={{
-        backgroundColor: tag.backgroundColor || '#E5E7EB',
-        color: tag.textColor || '#374151',
-        boxShadow: `0 1px 3px ${tag.backgroundColor}30`
+        backgroundColor: tag.backgroundColor || undefined,
+        color: tag.textColor || undefined
       }}
     >
       <IconComponent className={iconSizes[size]} />
@@ -124,10 +122,10 @@ export default function ProductTag({ tag, size = 'normal' }) {
   )
 }
 
-// Specialized badges for common use cases
+// Specialized badges with coastal theme
 export function PortionBadge({ text, language = 'es' }) {
   return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-sm shadow-green-200">
+    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-gradient-to-r from-seafoam-400 to-seafoam-500 text-white shadow-sm">
       <Maximize className="w-3.5 h-3.5" />
       <span>{text || (language === 'es' ? 'Porción abundante' : 'Large portion')}</span>
     </span>
@@ -136,7 +134,7 @@ export function PortionBadge({ text, language = 'es' }) {
 
 export function SharingBadge({ people, language = 'es' }) {
   return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-gradient-to-r from-purple-500 to-violet-600 text-white shadow-sm shadow-purple-200">
+    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-gradient-to-r from-ocean-400 to-ocean-600 text-white shadow-sm">
       <Users className="w-3.5 h-3.5" />
       <span>
         {people} {language === 'es' ? 'personas' : 'people'}
@@ -147,7 +145,7 @@ export function SharingBadge({ people, language = 'es' }) {
 
 export function RecommendedBadge({ language = 'es' }) {
   return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm shadow-amber-200">
+    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-gradient-to-r from-sunset-400 to-sunset-600 text-white shadow-sm">
       <Star className="w-3.5 h-3.5" fill="currentColor" />
       <span>{language === 'es' ? 'Recomendado' : 'Recommended'}</span>
     </span>
@@ -156,8 +154,8 @@ export function RecommendedBadge({ language = 'es' }) {
 
 export function CatchOfDayBadge({ language = 'es' }) {
   return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-sm shadow-cyan-200 animate-pulse">
-      <Anchor className="w-3.5 h-3.5" />
+    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-gradient-to-r from-ocean-500 to-ocean-700 text-white shadow-sm animate-pulse">
+      <Fish className="w-3.5 h-3.5" />
       <span>{language === 'es' ? 'Pesca del día' : 'Catch of the day'}</span>
     </span>
   )
@@ -165,7 +163,7 @@ export function CatchOfDayBadge({ language = 'es' }) {
 
 export function MachoSizeBadge({ language = 'es' }) {
   return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-sm shadow-red-200">
+    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-gradient-to-r from-sunset-500 to-coral-500 text-white shadow-sm">
       <Flame className="w-3.5 h-3.5" />
       <span>{language === 'es' ? '¡Tamaño Macho!' : 'Macho Size!'}</span>
     </span>
