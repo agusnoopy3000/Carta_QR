@@ -1,0 +1,66 @@
+# ========================================
+# EL MACHO - PRODUCTION CONFIGURATION
+# ========================================
+
+spring:
+  application:
+    name: el-macho-carta-qr
+
+  # PostgreSQL Configuration
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/elmachodb}
+    username: ${SPRING_DATASOURCE_USERNAME:elmacho}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # H2 Console disabled in production
+  h2:
+    console:
+      enabled: false
+
+  # Cache Configuration
+  cache:
+    type: simple
+
+# Server Configuration
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# Security Configuration
+app:
+  security:
+    admin:
+      username: admin
+      password: ${ADMIN_PASSWORD}
+    jwt:
+      secret: ${JWT_SECRET}
+      expiration: 86400000
+
+  restaurant:
+    name: El Macho
+    slogan: "Productos del Mar - ¡Porciones de Macho!"
+    default-language: es
+    supported-languages:
+      - es
+      - en
+
+# Logging
+logging:
+  level:
+    com.elmacho: INFO
+    org.springframework.security: WARN

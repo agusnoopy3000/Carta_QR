@@ -1,0 +1,42 @@
+# =====================================================
+# EL MACHO - Carta QR - Git Ignore
+# =====================================================
+
+# === Backend (Spring Boot) ===
+backend/target/
+backend/*.class
+backend/*.jar
+backend/*.war
+backend/*.log
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+
+# === Frontend (React/Vite) ===
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/*.log
+
+# === IDE ===
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# === Environment ===
+.env
+.env.local
+.env.*.local
+*.env
+
+# === Logs ===
+logs/
+*.log
+npm-debug.log*
+
+# === OS ===
+.DS_Store
+Thumbs.db

@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: elmacho-db
+    environment:
+      POSTGRES_DB: elmachodb
+      POSTGRES_USER: elmacho
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ElMacho2024!}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - elmacho-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U elmacho -d elmachodb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: elmacho-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/elmachodb
+      SPRING_DATASOURCE_USERNAME: elmacho
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-ElMacho2024!}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-ElMacho2024!}
+      JWT_SECRET: ${JWT_SECRET:-el-macho-carta-qr-secret-key-2024-production}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - elmacho-network
+    restart: unless-stopped
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: elmacho-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - elmacho-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  elmacho-network:
+    driver: bridge

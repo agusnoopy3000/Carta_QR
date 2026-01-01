@@ -1,0 +1,489 @@
+/* 
+ * 🦐 EL MACHO - Carta QR Interactiva
+ * Diseño UX/UI Cuántico - Caldera, Chile
+ * Identidad: Mar, Abundancia, Tradición, Costa Chilena
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   PALETA COSTERA CHILENA - CALDERA
+   ============================================ */
+:root {
+  /* Mar profundo */
+  --color-mar-50: #ecfeff;
+  --color-mar-100: #cffafe;
+  --color-mar-200: #a5f3fc;
+  --color-mar-300: #67e8f9;
+  --color-mar-400: #22d3ee;
+  --color-mar-500: #06b6d4;
+  --color-mar-600: #0891b2;
+  --color-mar-700: #0e7490;
+  --color-mar-800: #155e75;
+  --color-mar-900: #164e63;
+
+  /* Arena de playa */
+  --color-arena-50: #fefce8;
+  --color-arena-100: #fef9c3;
+  --color-arena-200: #fef08a;
+  --color-arena-300: #fde047;
+  --color-arena-400: #facc15;
+  --color-arena-500: #eab308;
+  
+  /* Madera de bote */
+  --color-madera-500: #92400e;
+  --color-madera-600: #78350f;
+  --color-madera-700: #451a03;
+
+  /* Coral/Naranja atardecer */
+  --color-coral-400: #fb923c;
+  --color-coral-500: #f97316;
+  --color-coral-600: #ea580c;
+
+  /* Redes y cuerdas */
+  --color-red-cuerda: #a8a29e;
+}
+
+/* ============================================
+   BASE STYLES - Mobile First
+   ============================================ */
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+    font-size: 16px; /* Base accesible */
+  }
+
+  body {
+    @apply font-body text-gray-800 antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Fondo que evoca arena húmeda */
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+    min-height: 100vh;
+  }
+
+  /* ACCESIBILIDAD: Botones mínimo 48px para dedos grandes y adultos mayores */
+  button, a, [role="button"] {
+    @apply min-h-[48px] min-w-[48px];
+  }
+
+  /* Tipografía legible bajo sol fuerte */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold tracking-tight;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Alto contraste para lectura */
+  p {
+    @apply leading-relaxed;
+  }
+}
+
+/* ============================================
+   COMPONENTES - Identidad El Macho
+   ============================================ */
+@layer components {
+  
+  /* ========== TARJETA DE PRODUCTO ========== */
+  /* Diseño sólido, táctil, que transmite abundancia */
+  .product-card {
+    @apply bg-white rounded-2xl overflow-hidden transition-all duration-200;
+    box-shadow: 
+      0 1px 3px rgba(0, 0, 0, 0.04),
+      0 4px 12px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+  }
+
+  .product-card:hover {
+    box-shadow: 
+      0 4px 12px rgba(0, 0, 0, 0.08),
+      0 8px 24px rgba(0, 0, 0, 0.06);
+  }
+
+  .product-card:active {
+    transform: scale(0.985);
+    transition: transform 0.1s ease-out;
+  }
+
+  /* Tarjeta destacada - Oro del atardecer */
+  .product-card-featured {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 2px solid #fbbf24;
+    box-shadow: 
+      0 4px 16px rgba(251, 191, 36, 0.2),
+      0 8px 32px rgba(251, 191, 36, 0.1);
+  }
+
+  /* Tarjeta pesca del día - Azul océano */
+  .product-card-catch {
+    background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
+    border: 2px solid #06b6d4;
+    box-shadow: 
+      0 4px 16px rgba(6, 182, 212, 0.2),
+      0 8px 32px rgba(6, 182, 212, 0.1);
+  }
+
+  /* ========== BADGES DE VALOR ========== */
+  /* Comunican ABUNDANCIA visualmente */
+  .badge-abundancia {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full 
+           text-xs font-bold uppercase tracking-wide;
+    letter-spacing: 0.03em;
+  }
+
+  .badge-porcion {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  }
+
+  .badge-compartir {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  }
+
+  .badge-macho {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    animation: pulse-soft 2s ease-in-out infinite;
+  }
+
+  .badge-recomendado {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+  }
+
+  .badge-pesca {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
+  }
+
+  /* ========== PRECIOS ========== */
+  /* Jerarquía clara, respira cuando cambia */
+  .price-main {
+    @apply font-display font-extrabold text-gray-800;
+    font-size: 1.75rem;
+    line-height: 1;
+    transition: all 0.25s ease-out;
+  }
+
+  .price-main-featured {
+    @apply text-amber-600;
+    font-size: 2rem;
+  }
+
+  .price-original {
+    @apply text-sm text-gray-400 line-through;
+  }
+
+  .price-desde {
+    @apply text-xs font-medium text-cyan-600 uppercase tracking-wide;
+  }
+
+  /* Animación suave del precio */
+  .price-change {
+    animation: price-breathe 0.3s ease-out;
+  }
+
+  @keyframes price-breathe {
+    0% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* ========== SELECTOR DE OPCIONES ========== */
+  /* Táctil, claro, satisfactorio */
+  .option-button {
+    @apply w-full p-4 rounded-xl border-2 transition-all duration-200
+           flex justify-between items-center bg-white;
+    min-height: 64px; /* Accesible para dedos grandes */
+  }
+
+  .option-button:active {
+    transform: scale(0.98);
+  }
+
+  .option-button-selected {
+    @apply border-cyan-500 bg-cyan-50;
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+  }
+
+  .option-button-unselected {
+    @apply border-gray-200 hover:border-gray-300 hover:bg-gray-50;
+  }
+
+  /* ========== NAVEGACIÓN DE CATEGORÍAS ========== */
+  .category-nav {
+    @apply sticky top-0 z-40;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .category-pill {
+    @apply px-5 py-3 rounded-xl text-sm font-semibold 
+           whitespace-nowrap transition-all duration-200;
+    min-height: 48px;
+  }
+
+  .category-pill-active {
+    @apply text-white shadow-lg;
+    background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+  }
+
+  .category-pill-inactive {
+    @apply bg-gray-100 text-gray-600 hover:bg-gray-200;
+  }
+
+  /* ========== SECCIÓN DESTACADOS ========== */
+  .featured-section {
+    background: linear-gradient(180deg, 
+      rgba(254, 252, 232, 0.8) 0%, 
+      rgba(255, 255, 255, 0.9) 100%
+    );
+    border-bottom: 1px solid rgba(251, 191, 36, 0.2);
+  }
+
+  /* ========== FOOTER COSTERO ========== */
+  .footer-costero {
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .footer-costero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, 
+      #06b6d4 0%, 
+      #0891b2 50%, 
+      #0e7490 100%
+    );
+  }
+}
+
+/* ============================================
+   ANIMACIONES CUÁNTICAS
+   Suaves, naturales, nunca distractoras
+   ============================================ */
+@layer utilities {
+  /* Entrada suave */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Expansión de tarjeta */
+  .animate-expand {
+    animation: expand 0.25s ease-out forwards;
+  }
+
+  @keyframes expand {
+    from { opacity: 0; max-height: 0; }
+    to { opacity: 1; max-height: 500px; }
+  }
+
+  /* Pulso suave para badges importantes */
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+  }
+
+  /* Ola suave para el header */
+  .animate-wave {
+    animation: wave 3s ease-in-out infinite;
+  }
+
+  @keyframes wave {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+
+  /* Scroll suave sin scrollbar */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ============================================
+   RESPONSIVE - Optimizado para sol fuerte
+   ============================================ */
+@media (prefers-contrast: high) {
+  .product-card {
+    border: 2px solid #000;
+  }
+  
+  .badge-abundancia {
+    border: 1px solid currentColor;
+  }
+}
+
+/* Modo oscuro automático para noche en el restaurante */
+@media (prefers-color-scheme: dark) {
+  body {
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  }
+  
+  .product-card {
+    @apply bg-slate-800 border-slate-700;
+  }
+  
+  h1, h2, h3, p {
+    @apply text-white;
+  }
+}
+
+/* ============================================
+   ACCESIBILIDAD - Controles dinámicos
+   ============================================ */
+
+/* Font Size Variations */
+html.font-small {
+  font-size: 14px;
+}
+
+html.font-normal {
+  font-size: 16px;
+}
+
+html.font-large {
+  font-size: 18px;
+}
+
+html.font-xlarge {
+  font-size: 20px;
+}
+
+/* High Contrast Mode */
+html.high-contrast {
+  --color-mar-500: #0284c7;
+  --color-arena-500: #ca8a04;
+}
+
+html.high-contrast body {
+  background: #ffffff;
+}
+
+html.high-contrast .product-card {
+  border: 2px solid #000 !important;
+  box-shadow: none;
+}
+
+html.high-contrast .badge-abundancia,
+html.high-contrast [class*="rounded-full"] {
+  border: 1px solid currentColor;
+}
+
+html.high-contrast .text-gray-500,
+html.high-contrast .text-gray-400 {
+  color: #374151 !important;
+}
+
+html.high-contrast .bg-gray-50,
+html.high-contrast .bg-gray-100 {
+  background-color: #f3f4f6 !important;
+  border: 1px solid #d1d5db;
+}
+
+/* Reduced Motion */
+html.reduced-motion *,
+html.reduced-motion *::before,
+html.reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Slide up animation for modals */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out forwards;
+}
+
+/* Safe area for iOS */
+.h-safe-area-inset-bottom {
+  height: env(safe-area-inset-bottom, 0px);
+}
+
+/* Ripple effect for buttons */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-effect::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 60%);
+  transform: scale(0);
+  opacity: 0;
+}
+
+.ripple-effect:active::after {
+  animation: ripple 0.4s ease-out;
+}
+
+.category-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth expand animation for product details */
+.expand-content {
+  animation: expand 0.25s ease-out;
+}
+
+/* Loading skeleton */
+.skeleton {
+  @apply animate-pulse bg-gray-200 rounded;
+}
+
+/* Safe area padding for iOS */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
